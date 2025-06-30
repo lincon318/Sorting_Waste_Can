@@ -1,0 +1,64 @@
+#include <Servo.h>
+#include <LiquidCrystal.h>
+
+// Pin definitions
+const int irSensor = 8;         // IR sensor OUT pin
+const int greenLED = 12;        // Ready status
+const int redLED = 11;          // Full bin indicator
+const int buzzer = 10;          // Buzzer alert
+const int servoPin = 6;         // Servo control pin
+const int binFullButton = 7;    // Simulates bin full condition (press = full)
+
+Servo lidServo;
+LiquidCrystal lcd(7, 4, 5, 3, 2, A0); // RS, E, D4, D5, D6, D7
+
+void setup() {
+  pinMode(irSensor, INPUT);
+  pinMode(greenLED, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+  pinMode(binFullButton, INPUT_PULLUP); // HIGH = not pressed, LOW = pressed (bin full)
+
+  lidServo.attach(servoPin);
+  lidServo.write(0); // Start with lid closed
+
+  lcd.begin(16, 2);
+  lcd.print("Smart Waste Can");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  int irValue = digitalRead(irSensor);
+  int binFull = digitalRead(binFullButton); // LOW when pressed (bin full)
+
+  if (irValue == LOW) { // Object detected
+    openLid();
+  } else {
+    lidServo.write(0); // Close lid
+    digitalWrite(greenLED, LOW);
+  }
+
+  // Simulate bin fullness
+  if (binFull == LOW) {
+    digitalWrite(redLED, HIGH);
+    digitalWrite(buzzer, HIGH);
+    lcd.setCursor(0, 1);
+    lcd.print("Bin is FULL     ");
+  } else {
+    digitalWrite(redLED, LOW);
+    digitalWrite(buzzer, LOW);
+    lcd.setCursor(0, 1);
+    lcd.print("Bin OK          ");
+  }
+
+  delay(300);
+}
+
+void openLid() {
+  lidServo.write(90); // Open lid
+  digitalWrite(greenLED, HIGH);
+  lcd.setCursor(0, 0);
+  lcd.print("Throw Waste     ");
+  delay(3000); // Keep lid open for 3 sec
+}
